@@ -1,4 +1,5 @@
 import { FireMessage } from "@fire/lib/extensions/message";
+import { FireTextChannel } from "@fire/lib/extensions/textchannel";
 import { constants } from "@fire/lib/util/constants";
 import { Listener } from "@fire/lib/util/listener";
 import Filters from "@fire/src/modules/filters";
@@ -98,6 +99,9 @@ export default class Message extends Listener {
     if (
       message.guildId == "864592657572560958" &&
       message.attachments.some((attach) => attach.name.endsWith(".zip")) &&
+      (message.channel as FireTextChannel).parentId != "1033867272260943893" &&
+      (message.channel as FireTextChannel).parentId != "1033869240274526311" &&
+      (message.channel as FireTextChannel).parentId != "1033869280938307625" &&
       !message.member.isModerator()
     )
       return await message.delete().catch(() => {});
