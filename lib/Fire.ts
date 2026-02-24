@@ -454,7 +454,7 @@ export class Fire extends AkairoClient {
       this.db = await this.dbPromise;
     } catch (err) {
       this.getLogger("DB").error("Failed to connect\n", err.stack);
-      return this.manager.kill("db_error");
+      return this.initDB(true);
     }
     this.getLogger("DB").log("Connected");
     this.db.on("error", (err) => {
