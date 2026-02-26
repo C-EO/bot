@@ -742,7 +742,7 @@ export class FireMessage extends Message {
     const embeds = this.embeds.filter(
       (embed) => !this.content?.includes(embed.url) && !this.isImageEmbed(embed)
     );
-    let components = this.components;
+    let components = [...this.components];
 
     const isAutoMod = this.type == "AUTO_MODERATION_ACTION";
     if (isAutoMod)
