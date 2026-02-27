@@ -1435,7 +1435,7 @@ export class FireMessage extends Message {
           channel: this.isSavedToQuote
             ? this.savedQuoteData.name
             : (this.channel as FireTextChannel).name,
-          guild: this.guild.name,
+          guild: this.guild?.name ?? "Unknown",
         }
       )
       .trim();
@@ -1753,7 +1753,7 @@ export class FireMessage extends Message {
           channel: this.isSavedToQuote
             ? this.savedQuoteData.name
             : (this.channel as FireTextChannel).name,
-          guild: this.guild.name,
+          guild: this.guild?.name ?? "Unknown",
         }
       )
       .trim();
@@ -1932,7 +1932,7 @@ export class FireMessage extends Message {
           channel: this.isSavedToQuote
             ? this.savedQuoteData.name
             : (this.channel as FireTextChannel).name,
-          guild: this.guild.name,
+          guild: this.guild?.name ?? "Unknown",
         }
       )
       .trim();
@@ -2112,7 +2112,7 @@ export class FireMessage extends Message {
           channel: this.isSavedToQuote
             ? this.savedQuoteData.name
             : (this.channel as FireTextChannel).name,
-          guild: this.guild.name,
+          guild: this.guild?.name ?? "Unknown",
         }
       )
       .trim();
@@ -2294,7 +2294,7 @@ export class FireMessage extends Message {
           channel: this.isSavedToQuote
             ? this.savedQuoteData.name
             : (this.channel as FireTextChannel).name,
-          guild: this.guild.name,
+          guild: this.guild?.name ?? "Unknown",
         }
       )
       .trim();
