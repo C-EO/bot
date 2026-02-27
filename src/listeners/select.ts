@@ -890,7 +890,7 @@ export default class Select extends Listener {
           .setCustomId(`!appeals:editFormItem:${index}`)
           .setLabel(
             select.language.get(
-              "APPEALS_CONFIG_UPDATE_EDIT_STRING_SELECT_BUTTON"
+              "APPEALS_CONFIG_UPDATE_EDIT_MULTI_SELECT_BUTTON"
             )
           ),
         addOptionButton = new MessageButton()
@@ -918,7 +918,7 @@ export default class Select extends Listener {
 
       return await select.channel.update({
         content: select.language.get(
-          "APPEALS_CONFIG_UPDATE_EDIT_STRING_SELECT_STARTER"
+          "APPEALS_CONFIG_UPDATE_EDIT_MULTI_SELECT_STARTER"
         ),
         components: [row],
       });

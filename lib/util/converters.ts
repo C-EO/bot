@@ -41,7 +41,7 @@ const messageIdRegex =
 const userMentionRegex = /<@!?(\d{15,21})>$/im;
 const channelMentionRegex = /<#(\d{15,21})>$/im;
 const roleMentionRegex = /<@&(\d{15,21})>$/im;
-const idOnlyRegex = /^(\d{15,21})$/im;
+export const idOnlyRegex = /^(\d{15,21})$/im;
 const idRegex = /(\d{15,21})/im;
 const { regexes } = constants;
 

@@ -39,7 +39,10 @@ import {
 import Anti from "../commands/Configuration/anti";
 import Google from "../commands/Fun/google";
 import Appeals, {
+  AppealFormCheckboxGroupItem,
   AppealFormDropdownItem,
+  AppealFormItem,
+  AppealFormRadioGroupItem,
   AppealStatus,
 } from "../commands/Moderation/appeals";
 import Rank from "../commands/Premium/rank";
@@ -194,7 +197,14 @@ const verifGFuelModalComponents = [
   ),
 ];
 
-const validAppealFormTypes = ["STRING_SELECT", "TEXT_INPUT", "FILE_UPLOAD"];
+const validAppealFormTypes = [
+  "STRING_SELECT",
+  "TEXT_INPUT",
+  "FILE_UPLOAD",
+  "CHECKBOX",
+  "CHECKBOX_GROUP",
+  "RADIO_GROUP",
+];
 
 export default class Button extends Listener {
   constructor() {
@@ -421,18 +431,35 @@ export default class Button extends Listener {
         fileUploadButton = new MessageButton()
           .setCustomId("!appeals:addFormItem:FILE_UPLOAD")
           .setStyle(MessageButtonStyles.PRIMARY)
-          .setLabel(button.language.get("APPEALS_CONFIG_UPDATE_FILE_UPLOAD"));
+          .setLabel(button.language.get("APPEALS_CONFIG_UPDATE_FILE_UPLOAD")),
+        checkboxButton = new MessageButton()
+          .setCustomId("!appeals:addFormItem:CHECKBOX")
+          .setStyle(MessageButtonStyles.PRIMARY)
+          .setLabel(button.language.get("APPEALS_CONFIG_UPDATE_CHECKBOX")),
+        checkboxGroupButton = new MessageButton()
+          .setCustomId("!appeals:addFormItem:CHECKBOX_GROUP")
+          .setStyle(MessageButtonStyles.PRIMARY)
+          .setLabel(
+            button.language.get("APPEALS_CONFIG_UPDATE_CHECKBOX_GROUP")
+          ),
+        radioGroupButton = new MessageButton()
+          .setCustomId("!appeals:addFormItem:RADIO_GROUP")
+          .setStyle(MessageButtonStyles.PRIMARY)
+          .setLabel(button.language.get("APPEALS_CONFIG_UPDATE_RADIO_GROUP"));
 
       const row = new MessageActionRow().addComponents(
         dropdownButton,
         textInputButton,
-        fileUploadButton
+        fileUploadButton,
+        checkboxButton,
+        checkboxGroupButton
       );
+      const rowTwo = new MessageActionRow().addComponents(radioGroupButton);
       return await button.channel.send({
         content: button.language.get(
           "APPEALS_CONFIG_UPDATE_ADD_FORM_ITEM_STARTER"
         ),
-        components: [row],
+        components: [row, rowTwo],
       });
     } else if (button.customId == "appeals:removeFormItem") {
       if (!button.member?.permissions.has(PermissionFlagsBits.BanMembers))
@@ -497,6 +524,57 @@ export default class Button extends Listener {
               label: this.client.util.shortenText(
                 `${button.language.get(
                   "APPEALS_CONFIG_UPDATE_FILE_UPLOAD"
+                )} - ${item.label}`,
+                60
+              ),
+              value: `appeals:removeFormItem:${
+                item.type
+              }:${config.items.indexOf(item)}`,
+              description: item.description
+                ? this.client.util.shortenText(item.description, 100)
+                : undefined,
+            });
+            break;
+          }
+          case MessageComponentTypes.CHECKBOX: {
+            options.push({
+              label: this.client.util.shortenText(
+                `${button.language.get(
+                  "APPEALS_CONFIG_UPDATE_CHECKBOX"
+                )} - ${item.label}`,
+                60
+              ),
+              value: `appeals:removeFormItem:${
+                item.type
+              }:${config.items.indexOf(item)}`,
+              description: item.description
+                ? this.client.util.shortenText(item.description, 100)
+                : undefined,
+            });
+            break;
+          }
+          case MessageComponentTypes.CHECKBOX_GROUP: {
+            options.push({
+              label: this.client.util.shortenText(
+                `${button.language.get(
+                  "APPEALS_CONFIG_UPDATE_CHECKBOX_GROUP"
+                )} - ${item.label}`,
+                60
+              ),
+              value: `appeals:removeFormItem:${
+                item.type
+              }:${config.items.indexOf(item)}`,
+              description: item.description
+                ? this.client.util.shortenText(item.description, 100)
+                : undefined,
+            });
+            break;
+          }
+          case MessageComponentTypes.RADIO_GROUP: {
+            options.push({
+              label: this.client.util.shortenText(
+                `${button.language.get(
+                  "APPEALS_CONFIG_UPDATE_RADIO_GROUP"
                 )} - ${item.label}`,
                 60
               ),
@@ -599,6 +677,57 @@ export default class Button extends Listener {
             });
             break;
           }
+          case MessageComponentTypes.CHECKBOX: {
+            options.push({
+              label: this.client.util.shortenText(
+                `${button.language.get(
+                  "APPEALS_CONFIG_UPDATE_CHECKBOX"
+                )} - ${item.label}`,
+                60
+              ),
+              value: `appeals:editFormItem:${item.type}:${config.items.indexOf(
+                item
+              )}`,
+              description: item.description
+                ? this.client.util.shortenText(item.description, 100)
+                : undefined,
+            });
+            break;
+          }
+          case MessageComponentTypes.CHECKBOX_GROUP: {
+            options.push({
+              label: this.client.util.shortenText(
+                `${button.language.get(
+                  "APPEALS_CONFIG_UPDATE_CHECKBOX_GROUP"
+                )} - ${item.label}`,
+                60
+              ),
+              value: `appeals:editFormItem:${item.type}:${config.items.indexOf(
+                item
+              )}`,
+              description: item.description
+                ? this.client.util.shortenText(item.description, 100)
+                : undefined,
+            });
+            break;
+          }
+          case MessageComponentTypes.RADIO_GROUP: {
+            options.push({
+              label: this.client.util.shortenText(
+                `${button.language.get(
+                  "APPEALS_CONFIG_UPDATE_RADIO_GROUP"
+                )} - ${item.label}`,
+                60
+              ),
+              value: `appeals:editFormItem:${item.type}:${config.items.indexOf(
+                item
+              )}`,
+              description: item.description
+                ? this.client.util.shortenText(item.description, 100)
+                : undefined,
+            });
+            break;
+          }
         }
       }
 
@@ -631,7 +760,10 @@ export default class Button extends Listener {
       const itemType = button.customId.slice(20) as
         | "STRING_SELECT"
         | "TEXT_INPUT"
-        | "FILE_UPLOAD";
+        | "FILE_UPLOAD"
+        | "CHECKBOX"
+        | "CHECKBOX_GROUP"
+        | "RADIO_GROUP";
       if (!validAppealFormTypes.includes(itemType))
         return await button.error(
           "APPEALS_CONFIG_UPDATE_INVALID_FORM_ITEM_TYPE"
@@ -672,6 +804,31 @@ export default class Button extends Listener {
           );
           break;
         }
+        case "CHECKBOX": {
+          title = button.language.get(
+            "APPEALS_CONFIG_UPDATE_CHECKBOX_MODAL_TITLE"
+          );
+          modalComponents = appeals.checkboxCreationComponents(button.language);
+          break;
+        }
+        case "CHECKBOX_GROUP": {
+          title = button.language.get(
+            "APPEALS_CONFIG_UPDATE_CHECKBOX_GROUP_MODAL_TITLE"
+          );
+          modalComponents = appeals.checkboxGroupCreationComponents(
+            button.language
+          );
+          break;
+        }
+        case "RADIO_GROUP": {
+          title = button.language.get(
+            "APPEALS_CONFIG_UPDATE_RADIO_GROUP_MODAL_TITLE"
+          );
+          modalComponents = appeals.radioGroupCreationComponents(
+            button.language
+          );
+          break;
+        }
       }
 
       const modal = new Modal()
@@ -699,8 +856,16 @@ export default class Button extends Listener {
         return await button.error("APPEALS_CONFIG_UPDATE_CHANNEL_REQUIRED");
 
       const index = +button.customId.split(":").at(3);
-      const item = config.items[index] as AppealFormDropdownItem;
-      if (!item || item.type != MessageComponentTypes.STRING_SELECT)
+      const item = config.items[index] as
+        | AppealFormDropdownItem
+        | AppealFormCheckboxGroupItem
+        | AppealFormRadioGroupItem;
+      if (
+        !item ||
+        (item.type != MessageComponentTypes.STRING_SELECT &&
+          item.type != MessageComponentTypes.CHECKBOX_GROUP &&
+          item.type != MessageComponentTypes.RADIO_GROUP)
+      )
         return await button.error(
           "APPEALS_CONFIG_UPDATE_EDIT_FORM_ITEM_UNKNOWN"
         );
@@ -709,7 +874,7 @@ export default class Button extends Listener {
         .setCustomId(button.customId)
         .setTitle(
           button.language.get(
-            "APPEALS_CONFIG_UPDATE_STRING_SELECT_ADD_OPTION_MODAL_TITLE"
+            "APPEALS_CONFIG_UPDATE_MULTI_SELECT_ADD_OPTION_MODAL_TITLE"
           )
         )
         .addComponents(
@@ -718,7 +883,7 @@ export default class Button extends Listener {
             .setLabel(button.language.get("LABEL"))
             .setDescription(
               button.language.get(
-                "APPEALS_CONFIG_UPDATE_STRING_SELECT_ADD_OPTION_MODAL_LABEL_DESCRIPTION"
+                "APPEALS_CONFIG_UPDATE_MULTI_SELECT_ADD_OPTION_MODAL_LABEL_DESCRIPTION"
               )
             )
             .setComponent(
@@ -733,7 +898,7 @@ export default class Button extends Listener {
             .setLabel(button.language.get("DESCRIPTION"))
             .setDescription(
               button.language.get(
-                "APPEALS_CONFIG_UPDATE_STRING_SELECT_ADD_OPTION_MODAL_DESCRIPTION_DESCRIPTION"
+                "APPEALS_CONFIG_UPDATE_MULTI_SELECT_ADD_OPTION_MODAL_DESCRIPTION_DESCRIPTION"
               )
             )
             .setComponent(
@@ -742,13 +907,19 @@ export default class Button extends Listener {
                 .setStyle(TextInputStyles.SHORT)
                 .setRequired(false)
                 .setMaxLength(100)
-            ),
+            )
+        );
+
+      // want to keep the order so we need to add this here
+      // if we're editing a dropdown
+      if (item.type == MessageComponentTypes.STRING_SELECT)
+        modal.addComponents(
           new LabelComponent()
             .setId(3)
             .setLabel(button.language.get("EMOJI"))
             .setDescription(
               button.language.get(
-                "APPEALS_CONFIG_UPDATE_STRING_SELECT_ADD_OPTION_MODAL_EMOJI_DESCRIPTION"
+                "APPEALS_CONFIG_UPDATE_MULTI_SELECT_ADD_OPTION_MODAL_EMOJI_DESCRIPTION"
               )
             )
             .setComponent(
@@ -757,34 +928,38 @@ export default class Button extends Listener {
                 .setStyle(TextInputStyles.SHORT)
                 .setRequired(false)
                 .setMaxLength(32)
-            ),
-          new LabelComponent()
-            .setId(4)
-            .setLabel(button.language.get("DEFAULT"))
-            .setDescription(
-              button.language.get(
-                "APPEALS_CONFIG_UPDATE_STRING_SELECT_ADD_OPTION_MODAL_DEFAULT_DESCRIPTION"
-              )
-            )
-            .setComponent(
-              new MessageSelectMenu()
-                .setCustomId("default")
-                .addOptions([
-                  {
-                    label: button.language.get("YES"),
-                    value: "true",
-                    default: false,
-                  },
-                  {
-                    label: button.language.get("NO"),
-                    value: "false",
-                    default: false,
-                  },
-                ])
-                .setMinValues(1)
-                .setMaxValues(1)
             )
         );
+
+      // and then add this here no matter what
+      modal.addComponents(
+        new LabelComponent()
+          .setId(4)
+          .setLabel(button.language.get("DEFAULT"))
+          .setDescription(
+            button.language.get(
+              "APPEALS_CONFIG_UPDATE_MULTI_SELECT_ADD_OPTION_MODAL_DEFAULT_DESCRIPTION"
+            )
+          )
+          .setComponent(
+            new MessageSelectMenu()
+              .setCustomId("default")
+              .addOptions([
+                {
+                  label: button.language.get("YES"),
+                  value: "true",
+                  default: false,
+                },
+                {
+                  label: button.language.get("NO"),
+                  value: "false",
+                  default: false,
+                },
+              ])
+              .setMinValues(1)
+              .setMaxValues(1)
+          )
+      );
 
       return await button.component.showModal(modal);
     } else if (
@@ -807,8 +982,16 @@ export default class Button extends Listener {
         return await button.error("APPEALS_CONFIG_UPDATE_CHANNEL_REQUIRED");
 
       const index = +button.customId.split(":").at(3);
-      const item = config.items[index] as AppealFormDropdownItem;
-      if (!item || item.type != MessageComponentTypes.STRING_SELECT)
+      const item = config.items[index] as
+        | AppealFormDropdownItem
+        | AppealFormCheckboxGroupItem
+        | AppealFormRadioGroupItem;
+      if (
+        !item ||
+        (item.type != MessageComponentTypes.STRING_SELECT &&
+          item.type != MessageComponentTypes.CHECKBOX_GROUP &&
+          item.type != MessageComponentTypes.RADIO_GROUP)
+      )
         return await button.error(
           "APPEALS_CONFIG_UPDATE_EDIT_FORM_ITEM_UNKNOWN"
         );
@@ -863,20 +1046,154 @@ export default class Button extends Listener {
         return await button.error("APPEALS_CONFIG_UPDATE_CHANNEL_REQUIRED");
 
       const index = +button.customId.split(":").at(2);
-      const item = config.items[index] as AppealFormDropdownItem;
-      if (!item || item.type != MessageComponentTypes.STRING_SELECT)
+      const item = config.items[index] as
+        | AppealFormDropdownItem
+        | AppealFormCheckboxGroupItem
+        | AppealFormRadioGroupItem;
+      if (
+        !item ||
+        (item.type != MessageComponentTypes.STRING_SELECT &&
+          item.type != MessageComponentTypes.CHECKBOX_GROUP &&
+          item.type != MessageComponentTypes.RADIO_GROUP)
+      )
         return await button.error(
           "APPEALS_CONFIG_UPDATE_EDIT_FORM_ITEM_UNKNOWN"
         );
 
-      const modal = new Modal()
-        .setTitle(
-          button.language.get("APPEALS_CONFIG_UPDATE_STRING_SELECT_MODAL_TITLE")
-        )
-        .setCustomId(`appeals:editFormItem:STRING_SELECT:${index}`)
-        .addComponents(
-          ...appeals.stringSelectCreationComponents(button.language, item)
-        );
+      let modal: Modal;
+      if (item.type == MessageComponentTypes.STRING_SELECT)
+        modal = new Modal()
+          .setTitle(
+            button.language.get(
+              "APPEALS_CONFIG_UPDATE_STRING_SELECT_MODAL_TITLE"
+            )
+          )
+          .setCustomId(`appeals:editFormItem:STRING_SELECT:${index}`)
+          .addComponents(
+            ...appeals.stringSelectCreationComponents(button.language, item)
+          );
+      else if (item.type == MessageComponentTypes.CHECKBOX_GROUP)
+        modal = new Modal()
+          .setTitle(
+            button.language.get(
+              "APPEALS_CONFIG_UPDATE_CHECKBOX_GROUP_MODAL_TITLE"
+            )
+          )
+          .setCustomId(`appeals:editFormItem:CHECKBOX_GROUP:${index}`)
+          .addComponents(
+            ...appeals.checkboxGroupCreationComponents(button.language, item)
+          );
+      else if (item.type == MessageComponentTypes.RADIO_GROUP)
+        modal = new Modal()
+          .setTitle(
+            button.language.get("APPEALS_CONFIG_UPDATE_RADIO_GROUP_MODAL_TITLE")
+          )
+          .setCustomId(`appeals:editFormItem:RADIO_GROUP:${index}`)
+          .addComponents(
+            ...appeals.radioGroupCreationComponents(button.language, item)
+          );
+
+      return await button.component.showModal(modal);
+    }
+
+    if (button.customId.startsWith("appeals:preview")) {
+      if (!button.member?.permissions.has(PermissionFlagsBits.BanMembers))
+        return await button.error("MISSING_PERMISSIONS_USER", {
+          permissions: this.client.util.cleanPermissionName(
+            PermissionFlagsBits.BanMembers,
+            button.language
+          ),
+          command: "appeals",
+        });
+
+      button.flags = 64;
+
+      const appeals = this.client.getCommand("appeals") as Appeals;
+      const config = await appeals.getAppealsConfig(button.guild);
+      if (!config.channel || !button.guild.channels.cache.has(config.channel))
+        return await button.error("APPEALS_CONFIG_UPDATE_CHANNEL_REQUIRED");
+
+      const modal = appeals.getAppealSubmitModal(
+        button,
+        config,
+        button.guild,
+        "preview",
+        true
+      );
+
+      return await button.component.showModal(modal);
+    }
+
+    if (button.customId.startsWith("appeal:submit:")) {
+      button.flags = 64;
+      const appealId = button.customId.slice(14);
+
+      let created: Date, guildId: Snowflake;
+      try {
+        const modLogEntryResult = await this.client.db
+          .query<{
+            gid: Snowflake;
+            uid: Snowflake;
+            created: Date;
+            appealstatus: AppealStatus;
+          }>(
+            "SELECT gid, uid, created, appealstatus FROM modlogs WHERE appealid=$1 AND type='ban';",
+            [appealId]
+          )
+          .first();
+        if (!modLogEntryResult)
+          return await button.error("APPEALS_SUBMIT_INVALID_APPEAL_ID");
+        const appealStatus = modLogEntryResult.appealstatus;
+        if (appealStatus != "not_appealed")
+          return await button.error("APPEALS_SUBMIT_ALREADY_APPEALED");
+        created = modLogEntryResult.created;
+        guildId = modLogEntryResult.gid;
+      } catch {
+        return await button.error("APPEALS_SUBMIT_INVALID_APPEAL_ID");
+      }
+
+      const appealConfigResult = await this.client.db
+        .query<{
+          notbefore: bigint;
+          notafter: bigint;
+          items: AppealFormItem[];
+        }>("SELECT notbefore, notafter, items FROM appeals WHERE gid=$1;", [
+          guildId,
+        ])
+        .first();
+      if (!appealConfigResult)
+        return await button.error("APPEALS_SUBMIT_NOT_CONFIGURED");
+      const notBefore = Number(appealConfigResult.notbefore),
+        notAfter = Number(appealConfigResult.notafter),
+        items = appealConfigResult.items;
+      if (!items.length)
+        return await button.error("APPEALS_SUBMIT_NOT_CONFIGURED");
+
+      if (notBefore && +new Date() < +created + notBefore)
+        return await button.error("APPEALS_SUBMIT_NOT_BEFORE", {
+          time: Formatters.time(new Date(+created + notBefore), "R"),
+        });
+      if (notAfter && +new Date() > +created + notBefore + notAfter)
+        return await button.error("APPEALS_SUBMIT_NOT_AFTER");
+
+      const guild = this.client.guilds.cache.has(guildId)
+        ? (this.client.guilds.cache.get(guildId) as FireGuild)
+        : await this.client.fetchGuildPreview(guildId).catch(() => {});
+      if (!guild) return await button.error("APPEALS_SUBMIT_INVALID_SERVER");
+
+      const appeals = this.client.getCommand("appeals") as Appeals;
+      const modal = appeals.getAppealSubmitModal(
+        button,
+        {
+          notBefore,
+          notAfter,
+          items,
+          channel: "",
+          language: button.language.id,
+        },
+        guild,
+        appealId
+      );
       return await button.component.showModal(modal);
     }
 

@@ -8,11 +8,20 @@ import { constants } from "@fire/lib/util/constants";
 import { Language, LanguageKeys } from "@fire/lib/util/language";
 import * as centra from "centra";
 import { Snowflake } from "discord-api-types/globals";
-import { APISelectMenuOption, PermissionFlagsBits } from "discord-api-types/v9";
+import {
+  APICheckboxGroupOption,
+  APIRadioGroupOption,
+  APISelectMenuOption,
+  PermissionFlagsBits,
+} from "discord-api-types/v9";
 import {
   ChannelSelectMenu,
+  CheckboxComponent,
+  CheckboxGroupComponent,
   ContainerComponent,
   FileComponent,
+  FileUploadComponent,
+  GuildPreview,
   LabelComponent,
   MediaGalleryComponent,
   MediaGalleryItem,
@@ -20,8 +29,11 @@ import {
   MessageAttachment,
   MessageButton,
   MessageSelectMenu,
+  Modal,
+  RadioGroupComponent,
   SectionComponent,
   SeparatorComponent,
+  StringSelectMenu,
   TextDisplayComponent,
   TextInputComponent,
   ThumbnailComponent,
@@ -49,10 +61,13 @@ export type AppealsConfig = {
   language: string;
 };
 
-type AppealFormItem =
+export type AppealFormItem =
   | AppealFormDropdownItem
   | AppealFormTextInputItem
-  | AppealFormFileUploadItem;
+  | AppealFormFileUploadItem
+  | AppealFormCheckboxItem
+  | AppealFormCheckboxGroupItem
+  | AppealFormRadioGroupItem;
 
 export type AppealFormDropdownItem = {
   type: MessageComponentTypes.STRING_SELECT;
@@ -81,7 +96,33 @@ export type AppealFormFileUploadItem = {
   required: boolean;
 };
 
+export type AppealFormCheckboxItem = {
+  type: MessageComponentTypes.CHECKBOX;
+  label: string;
+  description: string;
+  default: boolean;
+};
+
+export type AppealFormCheckboxGroupItem = {
+  type: MessageComponentTypes.CHECKBOX_GROUP;
+  label: string;
+  description: string;
+  options: APICheckboxGroupOption[];
+  minValues: number;
+  maxValues: number;
+  required: boolean;
+};
+
+export type AppealFormRadioGroupItem = {
+  type: MessageComponentTypes.RADIO_GROUP;
+  label: string;
+  description: string;
+  options: APIRadioGroupOption[];
+  required: boolean;
+};
+
 type AppealFileObject = {
+  url?: string;
   fileId: string;
   originalName: string;
   contentType: string;
@@ -222,10 +263,15 @@ export default class Appeals extends Command {
         .setDisabled(!config.channel);
 
     const previewAppealFormButton = new MessageButton()
-      .setURL(`${constants.url.website}/appeals/preview/${command.guildId}`)
-      .setStyle(MessageButtonStyles.LINK)
-      .setLabel(command.language.get("APPEALS_PREVIEW_FORM_BUTTON"))
-      .setDisabled(!config.channel);
+        .setURL(`${constants.url.website}/appeals/preview/${command.guildId}`)
+        .setStyle(MessageButtonStyles.LINK)
+        .setLabel(command.language.get("APPEALS_PREVIEW_FORM_BUTTON"))
+        .setDisabled(!config.channel),
+      previewInAppFormButton = new MessageButton()
+        .setCustomId("!appeals:preview")
+        .setStyle(MessageButtonStyles.SECONDARY)
+        .setLabel(command.language.get("APPEALS_PREVIEW_APP_FORM_BUTTON"))
+        .setDisabled(!config.channel);
 
     container.addComponents(
       new MessageActionRow().addComponents(channelDropdown),
@@ -245,7 +291,10 @@ export default class Appeals extends Command {
       new SeparatorComponent()
         .displayDivider(true)
         .setSpacing(SeparatorComponentSpacing.SMALL),
-      new MessageActionRow().addComponents(previewAppealFormButton)
+      new MessageActionRow().addComponents(
+        previewAppealFormButton,
+        previewInAppFormButton
+      )
     );
 
     return container;
@@ -346,9 +395,11 @@ export default class Appeals extends Command {
             new TextDisplayComponent({ content: `## ${item.label}` }),
             new MessageActionRow().addComponents(
               new MessageSelectMenu()
-                .setCustomId("IGNORE_ME")
+                .setCustomId(`IGNORE_ME${index}`)
                 .setDisabled(true)
                 .setPlaceholder(item.placeholder)
+                .setMinValues(0)
+                .setMaxValues(item.options.length)
                 .addOptions(
                   item.options.map((option) => ({
                     label: option.label,
@@ -376,10 +427,15 @@ export default class Appeals extends Command {
           );
           for (const file of files) {
             const req = await centra(
-              `${this.client.manager.REST_HOST}/v2/appeals/${data.appealId}/files/${file.fileId}`
+              "url" in file
+                ? file.url
+                : `${this.client.manager.REST_HOST}/v2/appeals/${data.appealId}/files/${file.fileId}`
             )
               .header("User-Agent", this.client.manager.ua)
-              .header("Authorization", process.env.WS_AUTH)
+              .header(
+                "Authorization",
+                "url" in file ? undefined : process.env.WS_AUTH
+              )
               .timeout(10000)
               .send()
               .catch(() => {});
@@ -424,7 +480,58 @@ export default class Appeals extends Command {
                   new FileComponent().setFile(encodeURI(file.originalName))
                 ),
               ]);
+            break;
           }
+        }
+        case MessageComponentTypes.CHECKBOX: {
+          formResponseComponents.push(
+            new TextDisplayComponent({
+              content: `${this.client.util.useEmoji(field.values.includes("true") ? "success" : "error")} ${item.label}`,
+            })
+          );
+          break;
+        }
+        case MessageComponentTypes.CHECKBOX_GROUP: {
+          formResponseComponents.push([
+            new TextDisplayComponent({ content: `## ${item.label}` }),
+            new MessageActionRow().addComponents(
+              new MessageSelectMenu()
+                .setCustomId(`IGNORE_ME${index}`)
+                .setDisabled(true)
+                .setMinValues(1)
+                .setMaxValues(item.options.length)
+                .addOptions(
+                  item.options.map((option) => ({
+                    label: option.label,
+                    value: option.value,
+                    description: option.description,
+                    default: field.values.includes(option.value),
+                  }))
+                )
+            ),
+          ]);
+          break;
+        }
+        case MessageComponentTypes.RADIO_GROUP: {
+          formResponseComponents.push([
+            new TextDisplayComponent({ content: `## ${item.label}` }),
+            new MessageActionRow().addComponents(
+              new MessageSelectMenu()
+                .setCustomId(`IGNORE_ME${index}`)
+                .setDisabled(true)
+                .setMinValues(1)
+                .setMaxValues(item.options.length)
+                .addOptions(
+                  item.options.map((option) => ({
+                    label: option.label,
+                    value: option.value,
+                    description: option.description,
+                    default: field.values.includes(option.value),
+                  }))
+                )
+            ),
+          ]);
+          break;
         }
       }
     }
@@ -463,6 +570,152 @@ export default class Appeals extends Command {
     );
 
     return { container, attachments };
+  }
+
+  getAppealSubmitModal(
+    context: ApplicationCommandMessage | ComponentMessage,
+    config: AppealsConfig,
+    guild: FireGuild | GuildPreview,
+    appealId: string,
+    preview: boolean = false
+  ) {
+    const modal = new Modal()
+      .setCustomId(`appeal:${preview ? "preview" : "submit"}:${appealId}`)
+      .setTitle(
+        context.language.get(
+          preview
+            ? "APPEALS_MODAL_PREVIEW_TITLE"
+            : "APPEALS_MODAL_SUBMIT_TITLE",
+          { server: guild?.name ?? "Unknown" }
+        )
+      );
+
+    for (const [index, item] of config.items.entries()) {
+      switch (item.type) {
+        case MessageComponentTypes.SELECT_MENU: {
+          modal.addComponents(
+            new LabelComponent()
+              .setLabel(item.label)
+              .setDescription(item.description)
+              .setComponent(
+                new StringSelectMenu()
+                  .setCustomId(index.toString())
+                  .setPlaceholder(item.placeholder)
+                  .setRequired(item.required)
+                  .setMinValues(item.required ? 1 : 0)
+                  .setMaxValues(1)
+                  .setOptions(
+                    item.options.map((option) => ({
+                      label: option.label,
+                      value: option.value,
+                      description: option.description,
+                      default: option.default,
+                      emoji: option.emoji?.id ?? option.emoji?.name,
+                    }))
+                  )
+              )
+          );
+          break;
+        }
+        case MessageComponentTypes.TEXT_INPUT: {
+          modal.addComponents(
+            new LabelComponent()
+              .setLabel(item.label)
+              .setDescription(item.description)
+              .setComponent(
+                new TextInputComponent()
+                  .setCustomId(index.toString())
+                  .setPlaceholder(item.placeholder)
+                  .setStyle(item.style)
+                  .setRequired(item.required)
+              )
+          );
+          break;
+        }
+        case MessageComponentTypes.FILE_UPLOAD: {
+          modal.addComponents(
+            new LabelComponent()
+              .setLabel(item.label)
+              .setDescription(item.description)
+              .setComponent(
+                new FileUploadComponent()
+                  .setCustomId(index.toString())
+                  .setMinValues(item.minFiles)
+                  .setMaxValues(item.maxFiles)
+                  .setRequired(item.required)
+              )
+          );
+          break;
+        }
+        case MessageComponentTypes.CHECKBOX: {
+          modal.addComponents(
+            new LabelComponent()
+              .setLabel(item.label)
+              .setDescription(item.description)
+              .setComponent(
+                new CheckboxComponent()
+                  .setCustomId(index.toString())
+                  .setDefault(item.default)
+              )
+          );
+          break;
+        }
+        case MessageComponentTypes.CHECKBOX_GROUP: {
+          modal.addComponents(
+            new LabelComponent()
+              .setLabel(item.label)
+              .setDescription(item.description)
+              .setComponent(
+                new CheckboxGroupComponent()
+                  .setCustomId(index.toString())
+                  .setRequired(item.required)
+                  .setMinValues(
+                    item.minValues > item.options.length
+                      ? item.options.length
+                      : item.minValues
+                  )
+                  .setMaxValues(
+                    item.maxValues > item.options.length
+                      ? item.options.length
+                      : item.maxValues
+                  )
+                  .setOptions(
+                    item.options.map((option) => ({
+                      label: option.label,
+                      value: option.value,
+                      description: option.description,
+                      default: option.default,
+                    }))
+                  )
+              )
+          );
+          break;
+        }
+        case MessageComponentTypes.RADIO_GROUP: {
+          modal.addComponents(
+            new LabelComponent()
+              .setLabel(item.label)
+              .setDescription(item.description)
+              .setComponent(
+                new RadioGroupComponent()
+                  .setCustomId(index.toString())
+                  .setRequired(item.required)
+                  .setOptions(
+                    item.options.map((option) => ({
+                      label: option.label,
+                      value: option.value,
+                      description: option.description,
+                      default: option.default,
+                    }))
+                  )
+              )
+          );
+          break;
+        }
+      }
+    }
+
+    return modal;
   }
 
   // KEEPING LONG REUSABLE COMPONENTS HERE
@@ -745,6 +998,240 @@ export default class Appeals extends Command {
         .setLabel(language.get("REQUIRED"))
         .setDescription(
           language.get("APPEALS_CONFIG_UPDATE_FILE_UPLOAD_REQUIRED_DESCRIPTION")
+        )
+        .setComponent(
+          new MessageSelectMenu()
+            .setCustomId("required")
+            .addOptions([
+              {
+                label: language.get("YES"),
+                value: "true",
+                default: existing ? existing.required : false,
+              },
+              {
+                label: language.get("NO"),
+                value: "false",
+                default: existing ? !existing.required : false,
+              },
+            ])
+            .setMinValues(1)
+            .setMaxValues(1)
+        ),
+    ];
+  }
+
+  checkboxCreationComponents(
+    language: Language,
+    existing?: AppealFormCheckboxItem
+  ) {
+    return [
+      new LabelComponent()
+        .setId(1)
+        .setLabel(language.get("LABEL"))
+        .setDescription(
+          language.get("APPEALS_CONFIG_UPDATE_CHECKBOX_LABEL_DESCRIPTION")
+        )
+        .setComponent(
+          new TextInputComponent()
+            .setCustomId("label")
+            .setRequired(true)
+            .setStyle(TextInputStyles.SHORT)
+            .setMaxLength(100)
+            .setValue(existing ? existing.label : undefined)
+        ),
+      new LabelComponent()
+        .setId(2)
+        .setLabel(language.get("DESCRIPTION"))
+        .setDescription(
+          language.get("APPEALS_CONFIG_UPDATE_CHECKBOX_DESCRIPTION_DESCRIPTION")
+        )
+        .setComponent(
+          new TextInputComponent()
+            .setCustomId("description")
+            .setRequired(false)
+            .setStyle(TextInputStyles.SHORT)
+            .setMaxLength(250)
+            .setValue(existing ? existing.description : undefined)
+        ),
+      new LabelComponent()
+        .setId(3)
+        .setLabel(language.get("DEFAULT"))
+        .setDescription(
+          language.get("APPEALS_CONFIG_UPDATE_CHECKBOX_DEFAULT_DESCRIPTION")
+        )
+        .setComponent(
+          new MessageSelectMenu()
+            .setCustomId("default")
+            .addOptions([
+              {
+                label: language.get("YES"),
+                value: "true",
+                default: existing ? existing.default : false,
+              },
+              {
+                label: language.get("NO"),
+                value: "false",
+                default: existing ? !existing.default : false,
+              },
+            ])
+            .setMinValues(1)
+            .setMaxValues(1)
+        ),
+    ];
+  }
+
+  checkboxGroupCreationComponents(
+    language: Language,
+    existing?: AppealFormCheckboxGroupItem
+  ) {
+    return [
+      new LabelComponent()
+        .setId(1)
+        .setLabel(language.get("LABEL"))
+        .setDescription(
+          language.get("APPEALS_CONFIG_UPDATE_CHECKBOX_GROUP_LABEL_DESCRIPTION")
+        )
+        .setComponent(
+          new TextInputComponent()
+            .setCustomId("label")
+            .setRequired(true)
+            .setStyle(TextInputStyles.SHORT)
+            .setMaxLength(100)
+            .setValue(existing ? existing.label : undefined)
+        ),
+      new LabelComponent()
+        .setId(2)
+        .setLabel(language.get("DESCRIPTION"))
+        .setDescription(
+          language.get(
+            "APPEALS_CONFIG_UPDATE_CHECKBOX_GROUP_DESCRIPTION_DESCRIPTION"
+          )
+        )
+        .setComponent(
+          new TextInputComponent()
+            .setCustomId("description")
+            .setRequired(false)
+            .setStyle(TextInputStyles.SHORT)
+            .setMaxLength(250)
+            .setValue(existing ? existing.description : undefined)
+        ),
+      new LabelComponent()
+        .setId(3)
+        .setLabel(
+          language.get("APPEALS_CONFIG_UPDATE_CHECKBOX_GROUP_MIN_VALUES_LABEL")
+        )
+        .setDescription(
+          language.get(
+            "APPEALS_CONFIG_UPDATE_CHECKBOX_GROUP_MIN_VALUES_DESCRIPTION"
+          )
+        )
+        .setComponent(
+          new MessageSelectMenu()
+            .setCustomId("min")
+            .addOptions(
+              Array.from({ length: 11 }).map((_, i) => ({
+                label: `${i}`,
+                value: `${i}`,
+                default: existing ? existing.minValues == i : false,
+              }))
+            )
+            .setRequired(false)
+            .setMinValues(1)
+            .setMaxValues(1)
+        ),
+      new LabelComponent()
+        .setId(4)
+        .setLabel(
+          language.get("APPEALS_CONFIG_UPDATE_CHECKBOX_GROUP_MAX_VALUES_LABEL")
+        )
+        .setDescription(
+          language.get(
+            "APPEALS_CONFIG_UPDATE_CHECKBOX_GROUP_MAX_VALUES_DESCRIPTION"
+          )
+        )
+        .setComponent(
+          new MessageSelectMenu()
+            .setCustomId("max")
+            .addOptions(
+              Array.from({ length: 10 }).map((_, i) => ({
+                label: `${i + 1}`,
+                value: `${i + 1}`,
+                default: existing ? existing.maxValues == i + 1 : false,
+              }))
+            )
+            .setRequired(false)
+            .setMinValues(1)
+            .setMaxValues(1)
+        ),
+      new LabelComponent()
+        .setId(5)
+        .setLabel(language.get("REQUIRED"))
+        .setDescription(
+          language.get(
+            "APPEALS_CONFIG_UPDATE_CHECKBOX_GROUP_REQUIRED_DESCRIPTION"
+          )
+        )
+        .setComponent(
+          new MessageSelectMenu()
+            .setCustomId("required")
+            .addOptions([
+              {
+                label: language.get("YES"),
+                value: "true",
+                default: existing ? existing.required : false,
+              },
+              {
+                label: language.get("NO"),
+                value: "false",
+                default: existing ? !existing.required : false,
+              },
+            ])
+            .setMinValues(1)
+            .setMaxValues(1)
+        ),
+    ];
+  }
+
+  radioGroupCreationComponents(
+    language: Language,
+    existing?: AppealFormRadioGroupItem
+  ) {
+    return [
+      new LabelComponent()
+        .setId(1)
+        .setLabel(language.get("LABEL"))
+        .setDescription(
+          language.get("APPEALS_CONFIG_UPDATE_RADIO_GROUP_LABEL_DESCRIPTION")
+        )
+        .setComponent(
+          new TextInputComponent()
+            .setCustomId("label")
+            .setRequired(true)
+            .setStyle(TextInputStyles.SHORT)
+            .setMaxLength(100)
+            .setValue(existing ? existing.label : undefined)
+        ),
+      new LabelComponent()
+        .setId(2)
+        .setLabel(language.get("DESCRIPTION"))
+        .setDescription(
+          language.get(
+            "APPEALS_CONFIG_UPDATE_RADIO_GROUP_DESCRIPTION_DESCRIPTION"
+          )
+        )
+        .setComponent(
+          new TextInputComponent()
+            .setCustomId("description")
+            .setRequired(false)
+            .setStyle(TextInputStyles.SHORT)
+            .setMaxLength(250)
+            .setValue(existing ? existing.description : undefined)
+        ),
+      new LabelComponent()
+        .setId(3)
+        .setLabel(language.get("REQUIRED"))
+        .setDescription(
+          language.get("APPEALS_CONFIG_UPDATE_RADIO_GROUP_REQUIRED_DESCRIPTION")
         )
         .setComponent(
           new MessageSelectMenu()

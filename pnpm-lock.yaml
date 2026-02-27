@@ -37,7 +37,7 @@ importers:
         version: 0.38.38
       discord.js:
         specifier: github:FireDiscordBot/discord.js
-        version: https://codeload.github.com/FireDiscordBot/discord.js/tar.gz/829c4bc0dca53d00b40627a208cef7e9c87f5a26
+        version: https://codeload.github.com/FireDiscordBot/discord.js/tar.gz/f484683b2dd516b6a8054d3d57433c257a0c456d
       dotenv-extended:
         specifier: ^2.9.0
         version: 2.9.0
@@ -501,9 +501,12 @@ packages:
   discord-api-types@0.38.38:
     resolution: {integrity: sha512-7qcM5IeZrfb+LXW07HvoI5L+j4PQeMZXEkSm1htHAHh4Y9JSMXBWjy/r7zmUCOj4F7zNjMcm7IMWr131MT2h0Q==}
 
-  discord.js@https://codeload.github.com/FireDiscordBot/discord.js/tar.gz/829c4bc0dca53d00b40627a208cef7e9c87f5a26:
-    resolution: {tarball: https://codeload.github.com/FireDiscordBot/discord.js/tar.gz/829c4bc0dca53d00b40627a208cef7e9c87f5a26}
-    version: 13.18.3-fire
+  discord-api-types@0.38.40:
+    resolution: {integrity: sha512-P/His8cotqZgQqrt+hzrocp9L8RhQQz1GkrCnC9TMJ8Uw2q0tg8YyqJyGULxhXn/8kxHETN4IppmOv+P2m82lQ==}
+
+  discord.js@https://codeload.github.com/FireDiscordBot/discord.js/tar.gz/f484683b2dd516b6a8054d3d57433c257a0c456d:
+    resolution: {tarball: https://codeload.github.com/FireDiscordBot/discord.js/tar.gz/f484683b2dd516b6a8054d3d57433c257a0c456d}
+    version: 13.18.4-fire
     engines: {node: '>=16.6.0', npm: '>=7.0.0'}
 
   dotenv-extended@2.9.0:
@@ -1276,14 +1279,16 @@ snapshots:
 
   discord-api-types@0.38.38: {}
 
-  discord.js@https://codeload.github.com/FireDiscordBot/discord.js/tar.gz/829c4bc0dca53d00b40627a208cef7e9c87f5a26:
+  discord-api-types@0.38.40: {}
+
+  discord.js@https://codeload.github.com/FireDiscordBot/discord.js/tar.gz/f484683b2dd516b6a8054d3d57433c257a0c456d:
     dependencies:
       '@discordjs/builders': 0.16.0
       '@discordjs/collection': 0.7.0
       '@sapphire/async-queue': 1.5.5
       '@types/node-fetch': 2.6.13
       '@types/ws': 8.18.1
-      discord-api-types: 0.38.38
+      discord-api-types: 0.38.40
       form-data: 4.0.5
       node-fetch: 2.7.0
       ws: 8.19.0

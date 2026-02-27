@@ -16,7 +16,7 @@ type AppealFileObject = {
   contentType: string;
 };
 
-type AppealSubmitData = {
+export type AppealSubmitData = {
   userId: Snowflake;
   guildId: Snowflake;
   appealId: string;

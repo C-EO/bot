@@ -772,20 +772,33 @@ export class FireMember extends GuildMember {
         this.guild.channels.cache.has(config?.channel) &&
         config?.items.length
       ) {
-        const appealButton = new MessageButton()
-          .setStyle(MessageButtonStyles.LINK)
-          .setURL(
-            `${constants.url.website}/appeals/submit/${this.guild.id}/${logEntry[1]}`
-          )
-          .setLabel(this.language.get("APPEALS_BUTTON_LABEL"));
-        components = [new MessageActionRow().addComponents(appealButton)];
+        const webAppealButton = new MessageButton()
+            .setStyle(MessageButtonStyles.LINK)
+            .setURL(
+              `${constants.url.website}/appeals/submit/${this.guild.id}/${logEntry[1]}`
+            )
+            .setLabel(this.language.get("APPEALS_WEB_BUTTON_LABEL")),
+          appAppealButton = new MessageButton()
+            .setCustomId(`!appeal:submit:${logEntry[1]}`)
+            .setStyle(MessageButtonStyles.SECONDARY)
+            .setLabel(this.language.get("APPEALS_APP_BUTTON_LABEL"));
+        components = [
+          new MessageActionRow().addComponents(
+            webAppealButton,
+            appAppealButton
+          ),
+        ];
       }
 
       banDM = await this.send({
-        content: this.language.get("BAN_DM", {
-          guild: Util.escapeMarkdown(this.guild.name),
-          reason,
-        }),
+        content: this.language.get(
+          components.length ? "BAN_DM_WITH_APPEAL" : "BAN_DM",
+          {
+            guild: Util.escapeMarkdown(this.guild.name),
+            reason,
+            userAppURL: `https://discord.com/oauth2/authorize?client_id=${this.client.user.id}&integration_type=1&scope=applications.commands`,
+          }
+        ),
         components,
       }).catch(() => {
         noDM = true;
