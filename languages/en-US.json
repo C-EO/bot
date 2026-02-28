@@ -599,7 +599,7 @@
   "BADNAME_RESET": "I have reset the \"bad name\" to John Doe 0000 (with 0000 being their discriminator).\nThis will **not** rename existing users",
   "BAN_LOG_AUTHOR": "Ban | {{user}}",
   "BAN_DM": "You were banned from {{guild}} for \"{{reason}}\"",
-  "BAN_DM_WITH_APPEAL": "You were banned from {{guild}} for \"{{reason}}\"\n\nYou have two options for submitting an appeal:\n- **Online Appeal**: Always available, requires leaving Discord to open the Fire website\n- **In-App Appeal**: Requires a mutual server or having {{identity}} [added to your apps]({{userAppURL}})",
+  "BAN_DM_WITH_APPEAL": "You were banned from {{guild}} for \"{{reason}}\"\n\nYou have two options for submitting an appeal:\n- **Online Appeal**: Always available, requires leaving Discord to open the Fire website\n- **In-App Appeal**: Requires a mutual server or having {{identity}} [added to your apps](<{{userAppURL}}>)",
   "BAN_SUCCESS": "**{{user}}** has been banished from {{guild}}.",
   "BAN_SEMI_SUCCESS": "**{{user}}** has been banished from {{guild}} but I was unable to save it in my database meaning they may not be unbanned when it expires, depending on the length of the ban.",
   "BAN_FAILED_OWNER": "You cannot ban the owner of the server",
