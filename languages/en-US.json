@@ -1525,6 +1525,7 @@
   "QUOTE_SYSTEM_MESSAGE_BOOST_MULTIPLE": "{{user}} just boosted the server **{{amount}}** times!",
   "QUOTE_SYSTEM_MESSAGE_BOOST_TIER_ONCE": "{{user}} just boosted the server! {{guild}} has achieved **Level {{tier}}!**",
   "QUOTE_SYSTEM_MESSAGE_BOOST_TIER_MULTIPLE": "{{user}} just boosted the server **{{amount}}** times! {{guild}} has achieved **Level {{tier}}!**",
+  "QUOTE_SYSTEM_MESSAGE_APPLICATION_PREMIUM_SUBSCRIPTION": "{{user}} upgraded {{application}} to premium for this server! 🎉",
   "RANK_COMMAND_DESCRIPTION": "List all available ranks and join a rank if provided",
   "RANKS_NONE_FOUND": "Seems like there's no ranks set for this server",
   "RANKS_INFO": "> {{role}} ({{members}} members)",

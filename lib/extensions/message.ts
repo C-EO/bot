@@ -335,7 +335,11 @@ export class FireMessage extends Message {
           guild: this.guild.name,
         }
       );
-    }
+    } else if (this.type == "GUILD_APPLICATION_PREMIUM_SUBSCRIPTION")
+      return lang.get("QUOTE_SYSTEM_MESSAGE_APPLICATION_PREMIUM_SUBSCRIPTION", {
+        user: this.author.displayName,
+        application: this.application.name,
+      });
 
     // if we get down here, just return the regular content because it's probably an unknown type
     return this.content;
