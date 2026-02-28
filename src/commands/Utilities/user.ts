@@ -407,7 +407,8 @@ export default class User extends Command {
       emojis.push(this.client.util.useEmoji("GUILD_OWNER"));
     if (user.isSuperuser())
       emojis.push(this.client.util.useEmoji("FIRE_ADMIN"));
-    if (user.premium) emojis.push(this.client.util.useEmoji("FIRE_PLUS"));
+    if (user.premium && !user.bot)
+      emojis.push(this.client.util.useEmoji("FIRE_PLUS"));
     if (user.id == "159985870458322944")
       emojis.push(this.client.util.useEmoji("NO_MEE6"));
     emojis.push(
