@@ -21,7 +21,7 @@ export default class Premium extends Inhibitor {
   }
 
   async exec(message: FireMessage, command: Command) {
-    if (command?.premium) return message.guild ? !message.guild.premium : true;
+    if (command?.premium) return message.guild ? !message.premium : true;
     return false;
   }
 
@@ -74,6 +74,27 @@ export default class Premium extends Inhibitor {
             });
         }
     }
+    const premiumDiscord = await this.client.db.query<{
+      gid: Snowflake;
+      uid: Snowflake;
+      active: boolean;
+      ends_at: Date;
+    }>("SELECT gid, uid, active, ends_at FROM discord_entitlements;");
+    for await (const row of premiumDiscord) {
+      const { gid, uid, active, ends_at } = row;
+      if (now > ends_at) continue;
+      // Stripe takes priority, don't add if already existing
+      if (active && !this.client.util.premium.has(gid))
+        this.client.util.premium.set(gid, {
+          status: "active",
+          limit: 1,
+          // Discord subscriptions are guild only,
+          // not user benefits, so we can default to the bot id
+          user: uid ?? this.client.user.id,
+          periodEnd: +ends_at,
+        });
+    }
+
     this.client.util.loadedData.premium = true;
     this.client
       .getLogger("Premium")

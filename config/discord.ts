@@ -85,6 +85,14 @@ export const discord: ClientOptions = {
       interval: 60,
       filter: () => (state) => state.channelId == null,
     },
+    entitlements: {
+      interval: 900,
+      filter: () => (entitlement) => !entitlement.isActive(),
+    },
+    subscriptions: {
+      interval: 900,
+      filter: () => (subscription) => subscription.status == "INACTIVE",
+    },
   },
   restRequestTimeout: 30000,
   restSweepInterval: 60,

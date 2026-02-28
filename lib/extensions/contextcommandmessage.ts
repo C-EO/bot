@@ -155,6 +155,14 @@ export class ContextCommandMessage {
           : "Unknown";
   }
 
+  get entitlements() {
+    return this.contextCommand.entitlements;
+  }
+
+  get premium() {
+    return this.entitlements.some((entitlement) => entitlement.isActive());
+  }
+
   get editedAt() {
     if (this.latestResponse && this.latestResponse instanceof FireMessage)
       return this.latestResponse.editedAt;
@@ -254,9 +262,8 @@ export class ContextCommandMessage {
 
     return Boolean(
       this.author.id === this.client.user.id ||
-        (permissions.has(PermissionFlagsBits.ManageMessages, false) &&
-          this.guild.members.me.communicationDisabledUntilTimestamp <
-            Date.now())
+      (permissions.has(PermissionFlagsBits.ManageMessages, false) &&
+        this.guild.members.me.communicationDisabledUntilTimestamp < Date.now())
     );
   }
 

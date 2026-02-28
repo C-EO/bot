@@ -141,6 +141,14 @@ export class ComponentMessage {
           : "Unknown";
   }
 
+  get entitlements() {
+    return this.component.entitlements;
+  }
+
+  get premium() {
+    return this.entitlements.some((entitlement) => entitlement.isActive());
+  }
+
   get ephemeral() {
     return (this.flags & (1 << 6)) == 1 << 6;
   }

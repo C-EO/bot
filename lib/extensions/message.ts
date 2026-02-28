@@ -159,6 +159,15 @@ export class FireMessage extends Message {
           : "Unknown";
   }
 
+  get premium() {
+    return (
+      this.client.util?.premium.has(this.guildId) ||
+      this.client.util?.premium.some(
+        (premium) => premium.user == this.author.id
+      )
+    );
+  }
+
   get paginator() {
     return this.client.util.paginators.get(this.id) ?? null;
   }
